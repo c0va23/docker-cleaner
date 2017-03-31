@@ -3,10 +3,13 @@ package main
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/docker/docker/client"
 	"github.com/docker/docker/api/types"
 )
+
+const limitDuration = time.Duration(7 * 24 * time.Hour)
 
 func main() {
 	cli, err := client.NewEnvClient()
@@ -35,10 +38,19 @@ func main() {
 
 	fmt.Printf("Images count %d\n", len(images))
 
-
 	uselessImageIds := []string{}
 
+	timeLimit := time.Now().Truncate(limitDuration)
+	fmt.Printf("Time limit %s\n", timeLimit)
+
 	for _, image := range images {
+		imageCreated := time.Unix(image.Created, 0)
+
+		if imageCreated.After(timeLimit) {
+			fmt.Printf("Image %s too fresh\n", image.ID)
+			continue
+		}
+
 		imageUsed := false
 		for _, container := range containers {
 			if container.ImageID == image.ID {
