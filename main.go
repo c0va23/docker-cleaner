@@ -43,11 +43,21 @@ func main() {
 		for _, container := range containers {
 			if container.ImageID == image.ID {
 				imageUsed = true
+				fmt.Printf("Image %s used by container %s\n", image.ID, container.ID)
+				break
+			}
+		}
+
+		for _, childImage := range images {
+			if childImage.ParentID == image.ID {
+				imageUsed = true
+				fmt.Printf("Image %s used by image %s\n", image.ID, childImage.ParentID)
 				break
 			}
 		}
 
 		if !imageUsed {
+			fmt.Printf("Image %s useless\n", image.ID)
 			uselessImageIds = append(uselessImageIds, image.ID)
 		}
 	}
