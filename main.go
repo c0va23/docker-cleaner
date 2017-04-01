@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/docker/docker/client"
 	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/client"
 )
 
 const limitDuration = time.Duration(7 * 24 * time.Hour)
@@ -26,7 +26,6 @@ func main() {
 	}
 
 	fmt.Printf("Containers count %d\n", len(containers))
-
 
 	images, err := cli.ImageList(
 		context.Background(),
