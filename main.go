@@ -3,15 +3,40 @@ package main
 import (
 	"context"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
+	cli "github.com/jawher/mow.cli"
 )
 
-const limitDuration = time.Duration(7 * 24 * time.Hour)
-
 func main() {
+	app := cli.App("declean", "Docker universal cleaner")
+	safePeriod := app.IntOpt("safe-period", 0, "Save period")
+
+	app.Command("images", "Clean useless images", func(cmd *cli.Cmd) {
+		cmd.Action = func() {
+			images(imagesOptions{
+				sharedOptions{
+					safePeriod: time.Duration(*safePeriod),
+				},
+			})
+		}
+	})
+
+	app.Run(os.Args)
+}
+
+type sharedOptions struct {
+	safePeriod time.Duration
+}
+
+type imagesOptions struct {
+	sharedOptions
+}
+
+func images(imagesOptions imagesOptions) {
 	cli, err := client.NewEnvClient()
 	if nil != err {
 		panic(err)
@@ -39,7 +64,7 @@ func main() {
 
 	uselessImageIds := []string{}
 
-	timeLimit := time.Now().Truncate(limitDuration)
+	timeLimit := time.Now().Truncate(imagesOptions.safePeriod)
 	fmt.Printf("Time limit %s\n", timeLimit)
 
 	for _, image := range images {
