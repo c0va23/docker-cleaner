@@ -13,13 +13,8 @@ type imagesOptions struct {
 	sharedOptions
 }
 
-func images(imagesOptions imagesOptions) {
-	cli, err := client.NewEnvClient()
-	if nil != err {
-		panic(err)
-	}
-
-	containers, err := cli.ContainerList(
+func images(client *client.Client, imagesOptions imagesOptions) {
+	containers, err := client.ContainerList(
 		context.Background(),
 		types.ContainerListOptions{All: true},
 	)
@@ -29,7 +24,7 @@ func images(imagesOptions imagesOptions) {
 
 	fmt.Printf("Containers count %d\n", len(containers))
 
-	images, err := cli.ImageList(
+	images, err := client.ImageList(
 		context.Background(),
 		types.ImageListOptions{All: true},
 	)
@@ -76,7 +71,7 @@ func images(imagesOptions imagesOptions) {
 	}
 
 	for _, imageID := range uselessImageIds {
-		response, err := cli.ImageRemove(
+		response, err := client.ImageRemove(
 			context.Background(),
 			imageID,
 			types.ImageRemoveOptions{},
