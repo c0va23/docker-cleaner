@@ -10,7 +10,7 @@ import (
 
 func main() {
 	app := cli.App("declean", "Docker universal cleaner")
-	safePeriod := app.IntOpt("safe-period", 0, "Save period")
+	safePeriod := app.IntOpt("safe-period", 0, "Save period (seconds)")
 	dryRun := app.BoolOpt("dry-run", false, "Dry run")
 
 	client, err := client.NewEnvClient()
@@ -28,7 +28,7 @@ func main() {
 
 	app.Command("images", "Clean useless images", func(cmd *cli.Cmd) {
 		cmd.Action = func() {
-			images(client, imagesOptions{
+			cleanImages(cleanImagesOptions{
 				sharedOptions: getSharedOptions(),
 			})
 		}

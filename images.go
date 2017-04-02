@@ -7,15 +7,14 @@ import (
 	"time"
 
 	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/client"
 )
 
-type imagesOptions struct {
+type cleanImagesOptions struct {
 	sharedOptions
 }
 
-func images(client *client.Client, imagesOptions imagesOptions) {
-	containers, err := client.ContainerList(
+func cleanImages(options cleanImagesOptions) {
+	containers, err := options.client.ContainerList(
 		context.Background(),
 		types.ContainerListOptions{All: true},
 	)
@@ -25,7 +24,7 @@ func images(client *client.Client, imagesOptions imagesOptions) {
 
 	fmt.Printf("Containers count %d\n", len(containers))
 
-	images, err := client.ImageList(
+	images, err := options.client.ImageList(
 		context.Background(),
 		types.ImageListOptions{All: true},
 	)
@@ -35,7 +34,7 @@ func images(client *client.Client, imagesOptions imagesOptions) {
 
 	fmt.Printf("Images count %d\n", len(images))
 
-	timeLimit := time.Now().Add(-imagesOptions.safePeriod)
+	timeLimit := time.Now().Add(-options.safePeriod)
 	fmt.Printf("Time limit %s\n", timeLimit)
 
 	uselessImageIDs := findUselessImages(findUselessImagesOptions{
@@ -44,7 +43,10 @@ func images(client *client.Client, imagesOptions imagesOptions) {
 		containers: containers,
 	})
 
-	removeImages(client, uselessImageIDs)
+	removeImages(removeImagesOptions{
+		cleanImagesOptions: options,
+		imageIDs:           uselessImageIDs,
+	})
 }
 
 type findUselessImagesOptions struct {
@@ -105,9 +107,14 @@ func findUselessImages(options findUselessImagesOptions) []string {
 	return uselessImageIDs
 }
 
-func removeImages(client *client.Client, imageIDs []string) {
-	for _, imageID := range imageIDs {
-		response, err := client.ImageRemove(
+type removeImagesOptions struct {
+	cleanImagesOptions
+	imageIDs []string
+}
+
+func removeImages(options removeImagesOptions) {
+	for _, imageID := range options.imageIDs {
+		response, err := options.client.ImageRemove(
 			context.Background(),
 			imageID,
 			types.ImageRemoveOptions{},
