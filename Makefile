@@ -5,9 +5,22 @@ COMMIT := $(shell git log --pretty=format:'%h' -n 1)
 init_dir:
 	mkdir -p bin/
 
+get_deps:
+	git submodule init
+	git submodule update
+
+test:
+	go test
+
 build: init_dir
 	go build -o bin/duclean \
 		-ldflags "-X main.version=$(VERSION) \
 			-X main.buildTime=$(BUILD_TIME) \
 			-X main.commit=$(COMMIT)" \
 		*.go
+
+create_tag:
+	git tag $(VERSION)
+
+push_tag:
+	git push origin $(VERSION)

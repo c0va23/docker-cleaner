@@ -28,6 +28,7 @@ Run 'declean COMMAND --help' for more information on a command.
 
 ### Compile
 ```bash
+make get_deps
 make build
 ./bin/duclean version
 ```
