@@ -115,3 +115,59 @@ func TestFindUselessImages_FullyUseless(t *testing.T) {
 		t.Errorf("Useless image IDs not contain fully useless image")
 	}
 }
+
+func TestFindUselessImages_UsedByUselessImage(t *testing.T) {
+	timeLimit := time.Now().Add(-5 * time.Minute)
+	image := types.ImageSummary{
+		ID:      genImageID(),
+		Created: timeLimit.Add(-5 * time.Minute).Unix(),
+	}
+	childImage := types.ImageSummary{
+		ID:       genImageID(),
+		ParentID: image.ID,
+		Created:  timeLimit.Add(-4 * time.Minute).Unix(),
+	}
+	uselessImageIDs := findUselessImages(findUselessImagesOptions{
+		timeLimit: timeLimit,
+		images: []types.ImageSummary{
+			image,
+			childImage,
+		},
+	})
+
+	if len(uselessImageIDs) != 2 {
+		t.Errorf("Useless image IDs not contain both image and  child image")
+	} else if uselessImageIDs[0] != childImage.ID {
+		t.Errorf("Useless image IDs not contain child image before image")
+	} else if uselessImageIDs[1] != image.ID {
+		t.Errorf("Useless image IDs not contain image after child image")
+	}
+}
+
+func TestFindUselessImages_UsedByUselessImageWithEqualTime(t *testing.T) {
+	timeLimit := time.Now().Add(-5 * time.Minute)
+	image := types.ImageSummary{
+		ID:      genImageID(),
+		Created: timeLimit.Add(-5 * time.Minute).Unix(),
+	}
+	childImage := types.ImageSummary{
+		ID:       genImageID(),
+		ParentID: image.ID,
+		Created:  image.Created,
+	}
+	uselessImageIDs := findUselessImages(findUselessImagesOptions{
+		timeLimit: timeLimit,
+		images: []types.ImageSummary{
+			image,
+			childImage,
+		},
+	})
+
+	if len(uselessImageIDs) != 2 {
+		t.Errorf("Useless image IDs not contain both image and child image")
+	} else if uselessImageIDs[0] != childImage.ID {
+		t.Errorf("Useless image IDs not contain child image before image")
+	} else if uselessImageIDs[1] != image.ID {
+		t.Errorf("Useless image IDs not contain image after child image")
+	}
+}

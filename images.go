@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"sort"
 	"time"
 
 	"github.com/docker/docker/api/types"
@@ -55,6 +56,13 @@ type findUselessImagesOptions struct {
 func findUselessImages(options findUselessImagesOptions) []string {
 	uselessImageIDs := []string{}
 
+	sort.Slice(options.images, func(i, j int) bool {
+		imageI := options.images[i]
+		imageJ := options.images[j]
+		return imageI.Created > imageJ.Created ||
+			(imageI.Created == imageJ.Created && imageI.ParentID == imageJ.ID)
+	})
+
 	for _, image := range options.images {
 		imageCreated := time.Unix(image.Created, 0)
 
@@ -74,9 +82,18 @@ func findUselessImages(options findUselessImagesOptions) []string {
 
 		for _, childImage := range options.images {
 			if childImage.ParentID == image.ID {
-				imageUsed = true
-				fmt.Printf("Image %s used by image %s\n", image.ID, childImage.ParentID)
-				break
+				childImageUseless := false
+				for _, uselessImageID := range uselessImageIDs {
+					if childImage.ID == uselessImageID {
+						childImageUseless = true
+						break
+					}
+				}
+				if !childImageUseless {
+					imageUsed = true
+					fmt.Printf("Image %s used by image %s\n", image.ID, childImage.ParentID)
+					break
+				}
 			}
 		}
 
