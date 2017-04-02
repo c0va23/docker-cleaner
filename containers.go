@@ -6,15 +6,16 @@ import (
 	"time"
 
 	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/client"
 )
 
 type cleanContainersOptions struct {
 	sharedOptions
+	removeVolumes bool
+	removeLinks   bool
 }
 
-func cleanContainers(client *client.Client, options cleanContainersOptions) {
-	containers, err := client.ContainerList(
+func cleanContainers(options cleanContainersOptions) {
+	containers, err := options.client.ContainerList(
 		context.Background(),
 		types.ContainerListOptions{All: true},
 	)
@@ -22,13 +23,16 @@ func cleanContainers(client *client.Client, options cleanContainersOptions) {
 		log.Fatal(err)
 	}
 
-	uselessContainerIDs := findUselessContainers(findUselessContainersOptions{
+	uselessContainers := findUselessContainers(findUselessContainersOptions{
 		timeLimit:  time.Now().Add(-options.safePeriod * time.Second),
 		containers: containers,
 	})
 
 	if !options.dryRun {
-		removeContainers(client, uselessContainerIDs)
+		removeContainers(removeContainerOptions{
+			cleanContainersOptions: options,
+			containers:             uselessContainers,
+		})
 	}
 }
 
@@ -66,12 +70,22 @@ func findUselessContainers(options findUselessContainersOptions) []types.Contain
 	return uselessContainers
 }
 
-func removeContainers(client *client.Client, containerss []types.Container) {
-	for _, container := range containerss {
-		err := client.ContainerRemove(
+type removeContainerOptions struct {
+	cleanContainersOptions
+	containers []types.Container
+}
+
+func removeContainers(options removeContainerOptions) {
+	containerRemoveOptions := types.ContainerRemoveOptions{
+		RemoveVolumes: options.removeVolumes,
+		RemoveLinks:   options.removeLinks,
+	}
+
+	for _, container := range options.containers {
+		err := options.client.ContainerRemove(
 			context.Background(),
 			container.ID,
-			types.ContainerRemoveOptions{},
+			containerRemoveOptions,
 		)
 		if nil != err {
 			log.Printf("Error remove container %s: %s", containerName(container), err)
