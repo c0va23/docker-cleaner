@@ -1,11 +1,18 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"time"
 
 	"github.com/docker/docker/client"
 	cli "github.com/jawher/mow.cli"
+)
+
+var (
+	version   string
+	buildTime string
+	commit    string
 )
 
 func main() {
@@ -44,6 +51,12 @@ func main() {
 				removeVolumes: *removeVolumes,
 				removeLinks:   *removeLinks,
 			})
+		}
+	})
+
+	app.Command("version", "Print version", func(cmd *cli.Cmd) {
+		cmd.Action = func() {
+			fmt.Printf("Version: %s\nBuild time: %s\nCommit: %s\n", version, buildTime, commit)
 		}
 	})
 
