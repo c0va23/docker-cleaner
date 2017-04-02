@@ -11,6 +11,7 @@ import (
 func main() {
 	app := cli.App("declean", "Docker universal cleaner")
 	safePeriod := app.IntOpt("safe-period", 0, "Save period")
+	dryRun := app.BoolOpt("dry-run", false, "Dry run")
 
 	client, err := client.NewEnvClient()
 	if nil != err {
@@ -24,9 +25,21 @@ func main() {
 				imagesOptions{
 					sharedOptions{
 						safePeriod: time.Duration(*safePeriod),
+						dryRun:     *dryRun,
 					},
 				},
 			)
+		}
+	})
+
+	app.Command("containers", "Clean containers", func(cmd *cli.Cmd) {
+		cmd.Action = func() {
+			cleanContainers(client, cleanContainersOptions{
+				sharedOptions{
+					safePeriod: time.Duration(*safePeriod),
+					dryRun:     *dryRun,
+				},
+			})
 		}
 	})
 
@@ -35,4 +48,5 @@ func main() {
 
 type sharedOptions struct {
 	safePeriod time.Duration
+	dryRun     bool
 }
