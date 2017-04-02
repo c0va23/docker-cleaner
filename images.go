@@ -34,21 +34,37 @@ func images(client *client.Client, imagesOptions imagesOptions) {
 
 	fmt.Printf("Images count %d\n", len(images))
 
-	uselessImageIds := []string{}
-
-	timeLimit := time.Now().Truncate(imagesOptions.safePeriod)
+	timeLimit := time.Now().Add(-imagesOptions.safePeriod)
 	fmt.Printf("Time limit %s\n", timeLimit)
 
-	for _, image := range images {
+	uselessImageIDs := findUselessImages(findUselessImagesOptions{
+		timeLimit:  timeLimit,
+		images:     images,
+		containers: containers,
+	})
+
+	removeImages(client, uselessImageIDs)
+}
+
+type findUselessImagesOptions struct {
+	timeLimit  time.Time
+	images     []types.ImageSummary
+	containers []types.Container
+}
+
+func findUselessImages(options findUselessImagesOptions) []string {
+	uselessImageIDs := []string{}
+
+	for _, image := range options.images {
 		imageCreated := time.Unix(image.Created, 0)
 
-		if imageCreated.After(timeLimit) {
+		if imageCreated.After(options.timeLimit) {
 			fmt.Printf("Image %s too fresh\n", image.ID)
 			continue
 		}
 
 		imageUsed := false
-		for _, container := range containers {
+		for _, container := range options.containers {
 			if container.ImageID == image.ID {
 				imageUsed = true
 				fmt.Printf("Image %s used by container %s\n", image.ID, container.ID)
@@ -56,7 +72,7 @@ func images(client *client.Client, imagesOptions imagesOptions) {
 			}
 		}
 
-		for _, childImage := range images {
+		for _, childImage := range options.images {
 			if childImage.ParentID == image.ID {
 				imageUsed = true
 				fmt.Printf("Image %s used by image %s\n", image.ID, childImage.ParentID)
@@ -66,11 +82,14 @@ func images(client *client.Client, imagesOptions imagesOptions) {
 
 		if !imageUsed {
 			fmt.Printf("Image %s useless\n", image.ID)
-			uselessImageIds = append(uselessImageIds, image.ID)
+			uselessImageIDs = append(uselessImageIDs, image.ID)
 		}
 	}
+	return uselessImageIDs
+}
 
-	for _, imageID := range uselessImageIds {
+func removeImages(client *client.Client, imageIDs []string) {
+	for _, imageID := range imageIDs {
 		response, err := client.ImageRemove(
 			context.Background(),
 			imageID,
