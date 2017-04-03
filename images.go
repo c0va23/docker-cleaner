@@ -43,10 +43,12 @@ func cleanImages(options cleanImagesOptions) {
 		containers: containers,
 	})
 
-	removeImages(removeImagesOptions{
-		cleanImagesOptions: options,
-		imageIDs:           uselessImageIDs,
-	})
+	if !options.dryRun {
+		removeImages(removeImagesOptions{
+			cleanImagesOptions: options,
+			imageIDs:           uselessImageIDs,
+		})
+	}
 }
 
 type findUselessImagesOptions struct {
