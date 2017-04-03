@@ -54,6 +54,16 @@ func main() {
 		}
 	})
 
+	app.Command("volumes", "Clean useless volumes", func(cmd *cli.Cmd) {
+		force := cmd.BoolOpt("force F", false, "Force remove volumes")
+		cmd.Action = func() {
+			cleanVolumes(cleanVolumesOptions{
+				sharedOptions: getSharedOptions(),
+				force:         *force,
+			})
+		}
+	})
+
 	app.Command("version", "Print version", func(cmd *cli.Cmd) {
 		cmd.Action = func() {
 			fmt.Printf("Version: %s\nBuild time: %s\nCommit: %s\n", version, buildTime, commit)
