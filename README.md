@@ -32,3 +32,14 @@ make get_deps
 make build
 ./bin/duclean version
 ```
+
+## Known issues
+- *Description*: Any command return error message `Error response from daemon: client is newer than server (client API version: 1.xx, server API version: 1.24)`
+
+  *Solution*: Run `duclean` with environment variable `DOCKER_API_VERSION=1.xx`, when `1.xx` is version from error
+  message.
+
+  *Example*:
+  ```bash
+  DOCKER_API_VERSION=1.24 duclean
+  ```
