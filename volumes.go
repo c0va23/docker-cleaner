@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"log"
-	"time"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
@@ -26,8 +25,7 @@ func cleanVolumes(options cleanVolumesOptions) {
 	}
 
 	uselessVolumes := findUselessVolumes(findUselessVolumesOptions{
-		timeLimit: time.Now().Add(-options.safePeriod),
-		volumes:   volumesList.Volumes,
+		volumes: volumesList.Volumes,
 	})
 
 	if !options.dryRun {
@@ -39,8 +37,7 @@ func cleanVolumes(options cleanVolumesOptions) {
 }
 
 type findUselessVolumesOptions struct {
-	timeLimit time.Time
-	volumes   []*types.Volume
+	volumes []*types.Volume
 }
 
 func findUselessVolumes(options findUselessVolumesOptions) []types.Volume {
