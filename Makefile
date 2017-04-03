@@ -26,4 +26,4 @@ push_tag:
 	git push origin v$(VERSION)
 
 archive: init_dir build
-	gzip -c $(BIN_PATH) > releases/duclean-v$(VERSION).gz
+	bzip2 --compress --keep $(BIN_PATH) --stdout > releases/duclean-v$(VERSION).bz2
