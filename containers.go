@@ -42,6 +42,9 @@ type findUselessContainersOptions struct {
 }
 
 func containerName(container types.Container) string {
+	if len(container.Names) == 0 || len(container.Names[0]) < 2 {
+		return ""
+	}
 	return container.Names[0][1:]
 }
 
