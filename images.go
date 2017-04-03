@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"fmt"
+	"log"
 	"sort"
 	"time"
 
@@ -19,23 +19,23 @@ func cleanImages(options cleanImagesOptions) {
 		types.ContainerListOptions{All: true},
 	)
 	if nil != err {
-		panic(err)
+		log.Fatal(err)
 	}
 
-	fmt.Printf("Containers count %d\n", len(containers))
+	log.Printf("Containers count %d", len(containers))
 
 	images, err := options.client.ImageList(
 		context.Background(),
 		types.ImageListOptions{All: true},
 	)
 	if nil != err {
-		panic(err)
+		log.Fatal(err)
 	}
 
-	fmt.Printf("Images count %d\n", len(images))
+	log.Printf("Images count %d", len(images))
 
 	timeLimit := time.Now().Add(-options.safePeriod)
-	fmt.Printf("Time limit %s\n", timeLimit)
+	log.Printf("Time limit %s", timeLimit)
 
 	uselessImageIDs := findUselessImages(findUselessImagesOptions{
 		timeLimit:  timeLimit,
@@ -69,7 +69,7 @@ func findUselessImages(options findUselessImagesOptions) []string {
 		imageCreated := time.Unix(image.Created, 0)
 
 		if imageCreated.After(options.timeLimit) {
-			fmt.Printf("Image %s too fresh\n", image.ID)
+			log.Printf("Image %s too fresh", image.ID)
 			continue
 		}
 
@@ -77,7 +77,7 @@ func findUselessImages(options findUselessImagesOptions) []string {
 		for _, container := range options.containers {
 			if container.ImageID == image.ID {
 				imageUsed = true
-				fmt.Printf("Image %s used by container %s\n", image.ID, container.ID)
+				log.Printf("Image %s used by container %s", image.ID, container.ID)
 				break
 			}
 		}
@@ -93,14 +93,14 @@ func findUselessImages(options findUselessImagesOptions) []string {
 				}
 				if !childImageUseless {
 					imageUsed = true
-					fmt.Printf("Image %s used by image %s\n", image.ID, childImage.ParentID)
+					log.Printf("Image %s used by image %s", image.ID, childImage.ParentID)
 					break
 				}
 			}
 		}
 
 		if !imageUsed {
-			fmt.Printf("Image %s useless\n", image.ID)
+			log.Printf("Image %s useless", image.ID)
 			uselessImageIDs = append(uselessImageIDs, image.ID)
 		}
 	}
@@ -120,9 +120,15 @@ func removeImages(options removeImagesOptions) {
 			types.ImageRemoveOptions{},
 		)
 		if nil != err {
-			fmt.Printf("Err: %s\n", err)
+			log.Printf("Error remove image %s: %s", imageID, err)
 		}
 
-		fmt.Printf("Response: %+v\n", response)
+		for _, deleteItem := range response {
+			if "" != deleteItem.Deleted {
+				log.Printf("Delete %s", deleteItem.Deleted)
+			} else {
+				log.Printf("Untagged %s", deleteItem.Untagged)
+			}
+		}
 	}
 }
