@@ -49,3 +49,23 @@ func TestFindUselessContainers(t *testing.T) {
 	}
 	t.Errorf("findUselessContainers not return useless container")
 }
+
+func TestContainerName(t *testing.T) {
+	nameless := containerName(types.Container{
+		Names: []string{},
+	})
+
+	if "" != nameless {
+		t.Errorf("Not return empty string for nameless container")
+	}
+
+	name := containerName(types.Container{
+		Names: []string{
+			"/golang",
+		},
+	})
+
+	if "golang" != name {
+		t.Errorf("containerName return invalid name")
+	}
+}
