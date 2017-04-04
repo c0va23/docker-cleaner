@@ -10,7 +10,8 @@ import (
 
 type cleanVolumesOptions struct {
 	sharedOptions
-	force bool
+	dryRun bool
+	force  bool
 }
 
 func cleanVolumes(options cleanVolumesOptions) {

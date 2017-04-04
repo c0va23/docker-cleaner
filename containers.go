@@ -10,6 +10,8 @@ import (
 
 type cleanContainersOptions struct {
 	sharedOptions
+	safePeriod    time.Duration
+	dryRun        bool
 	removeVolumes bool
 	removeLinks   bool
 }

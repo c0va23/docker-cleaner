@@ -17,52 +17,19 @@ var (
 
 func main() {
 	app := cli.App("declean", "Docker universal cleaner")
-	safePeriod := app.IntOpt("safe-period", 0, "Save period (seconds)")
-	dryRun := app.BoolOpt("dry-run", false, "Dry run")
 
 	client, err := client.NewEnvClient()
 	if nil != err {
 		panic(err)
 	}
 
-	getSharedOptions := func() sharedOptions {
-		return sharedOptions{
-			client:     client,
-			safePeriod: time.Duration(*safePeriod),
-			dryRun:     *dryRun,
-		}
-	}
+	defer client.Close()
 
-	app.Command("images", "Clean useless images", func(cmd *cli.Cmd) {
-		cmd.Action = func() {
-			cleanImages(cleanImagesOptions{
-				sharedOptions: getSharedOptions(),
-			})
-		}
-	})
+	app.Command("images", "Clean useless images", commandImages(client))
 
-	app.Command("containers", "Clean containers", func(cmd *cli.Cmd) {
-		removeVolumes := cmd.BoolOpt("remove-volumes V", false, "Remove volumes")
-		removeLinks := cmd.BoolOpt("remove-links L", false, "Remove links")
+	app.Command("containers", "Clean containers", commandContainers(client))
 
-		cmd.Action = func() {
-			cleanContainers(cleanContainersOptions{
-				sharedOptions: getSharedOptions(),
-				removeVolumes: *removeVolumes,
-				removeLinks:   *removeLinks,
-			})
-		}
-	})
-
-	app.Command("volumes", "Clean useless volumes", func(cmd *cli.Cmd) {
-		force := cmd.BoolOpt("force F", false, "Force remove volumes")
-		cmd.Action = func() {
-			cleanVolumes(cleanVolumesOptions{
-				sharedOptions: getSharedOptions(),
-				force:         *force,
-			})
-		}
-	})
+	app.Command("volumes", "Clean useless volumes", commandVolumes(client))
 
 	app.Command("version", "Print version", func(cmd *cli.Cmd) {
 		cmd.Action = func() {
@@ -73,8 +40,70 @@ func main() {
 	app.Run(os.Args)
 }
 
+func getSafePeriod(cmd *cli.Cmd) *int {
+	return cmd.IntOpt("safe-period", 0, "Save period (seconds)")
+
+}
+
+func getDryRun(cmd *cli.Cmd) *bool {
+	return cmd.BoolOpt("dry-run", false, "Dry run")
+}
+
+func commandImages(client *client.Client) func(*cli.Cmd) {
+	return func(cmd *cli.Cmd) {
+		safePeriod := getSafePeriod(cmd)
+		dryRun := getDryRun(cmd)
+
+		cmd.Action = func() {
+			cleanImages(cleanImagesOptions{
+				sharedOptions: sharedOptions{
+					client: client,
+				},
+				dryRun:     *dryRun,
+				safePeriod: time.Duration(*safePeriod),
+			})
+		}
+	}
+}
+
+func commandContainers(client *client.Client) func(*cli.Cmd) {
+	return func(cmd *cli.Cmd) {
+		safePeriod := getSafePeriod(cmd)
+		dryRun := getDryRun(cmd)
+		removeVolumes := cmd.BoolOpt("remove-volumes V", false, "Remove volumes")
+		removeLinks := cmd.BoolOpt("remove-links L", false, "Remove links")
+
+		cmd.Action = func() {
+			cleanContainers(cleanContainersOptions{
+				sharedOptions: sharedOptions{
+					client: client,
+				},
+				dryRun:        *dryRun,
+				safePeriod:    time.Duration(*safePeriod),
+				removeVolumes: *removeVolumes,
+				removeLinks:   *removeLinks,
+			})
+		}
+	}
+}
+
+func commandVolumes(client *client.Client) func(*cli.Cmd) {
+	return func(cmd *cli.Cmd) {
+		dryRun := getDryRun(cmd)
+		force := cmd.BoolOpt("force F", false, "Force remove volumes")
+
+		cmd.Action = func() {
+			cleanVolumes(cleanVolumesOptions{
+				sharedOptions: sharedOptions{
+					client: client,
+				},
+				dryRun: *dryRun,
+				force:  *force,
+			})
+		}
+	}
+}
+
 type sharedOptions struct {
-	client     *client.Client
-	safePeriod time.Duration
-	dryRun     bool
+	client *client.Client
 }

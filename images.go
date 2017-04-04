@@ -11,6 +11,8 @@ import (
 
 type cleanImagesOptions struct {
 	sharedOptions
+	safePeriod time.Duration
+	dryRun     bool
 }
 
 func cleanImages(options cleanImagesOptions) {
