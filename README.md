@@ -4,17 +4,14 @@ duclean (**D**ocker **u**niversal **clean**er) is command line application for c
 ## Usage
 
 ```
-Usage: declean [OPTIONS] COMMAND [arg...]
+Usage: declean COMMAND [arg...]
 
 Docker universal cleaner
-
-Options:
-  --safe-period=0   Save period (seconds)
-  --dry-run=false   Dry run
 
 Commands:
   images       Clean useless images
   containers   Clean containers
+  volumes      Clean useless volumes
   version      Print version
 
 Run 'declean COMMAND --help' for more information on a command.
