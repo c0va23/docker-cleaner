@@ -4,3 +4,6 @@
 [submodule "vendor/github.com/jawher/mow.cli"]
 	path = vendor/github.com/jawher/mow.cli
 	url = https://github.com/jawher/mow.cli.git
+[submodule "vendor/gopkg.in/stretchr/testify.v1"]
+	path = vendor/gopkg.in/stretchr/testify.v1
+	url = https://gopkg.in/stretchr/testify.v1
