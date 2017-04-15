@@ -49,7 +49,7 @@ func getDryRun(cmd *cli.Cmd) *bool {
 	return cmd.BoolOpt("dry-run", false, "Dry run")
 }
 
-func commandImages(client *client.Client) func(*cli.Cmd) {
+func commandImages(client client.CommonAPIClient) func(*cli.Cmd) {
 	return func(cmd *cli.Cmd) {
 		safePeriod := getSafePeriod(cmd)
 		dryRun := getDryRun(cmd)
@@ -66,7 +66,7 @@ func commandImages(client *client.Client) func(*cli.Cmd) {
 	}
 }
 
-func commandContainers(client *client.Client) func(*cli.Cmd) {
+func commandContainers(client client.CommonAPIClient) func(*cli.Cmd) {
 	return func(cmd *cli.Cmd) {
 		safePeriod := getSafePeriod(cmd)
 		dryRun := getDryRun(cmd)
@@ -87,7 +87,7 @@ func commandContainers(client *client.Client) func(*cli.Cmd) {
 	}
 }
 
-func commandVolumes(client *client.Client) func(*cli.Cmd) {
+func commandVolumes(client client.CommonAPIClient) func(*cli.Cmd) {
 	return func(cmd *cli.Cmd) {
 		dryRun := getDryRun(cmd)
 		force := cmd.BoolOpt("force F", false, "Force remove volumes")
@@ -105,5 +105,5 @@ func commandVolumes(client *client.Client) func(*cli.Cmd) {
 }
 
 type sharedOptions struct {
-	client *client.Client
+	client client.CommonAPIClient
 }
