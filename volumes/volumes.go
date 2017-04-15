@@ -1,4 +1,4 @@
-package main
+package volumes
 
 import (
 	"context"
@@ -6,18 +6,20 @@ import (
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
+	"github.com/docker/docker/client"
 )
 
-type cleanVolumesOptions struct {
-	sharedOptions
-	dryRun bool
-	force  bool
+type CleanOptions struct {
+	DockerClient client.CommonAPIClient
+	DryRun       bool
+	Force        bool
 }
 
-func cleanVolumes(options cleanVolumesOptions) {
+func Clean(options CleanOptions) {
 	args := filters.NewArgs()
 	args.Add("dangling", "true")
-	volumesList, err := options.client.VolumeList(context.Background(), args)
+	volumesList, err := options.DockerClient.
+		VolumeList(context.Background(), args)
 	if nil != err {
 		log.Fatal(err)
 	}
@@ -29,10 +31,10 @@ func cleanVolumes(options cleanVolumesOptions) {
 		volumes: volumesList.Volumes,
 	})
 
-	if !options.dryRun {
+	if !options.DryRun {
 		removeVolumes(removeVolumesOptions{
-			cleanVolumesOptions: options,
-			volumes:             uselessVolumes,
+			CleanOptions: options,
+			volumes:      uselessVolumes,
 		})
 	}
 }
@@ -64,13 +66,17 @@ func findUselessVolumes(options findUselessVolumesOptions) []types.Volume {
 }
 
 type removeVolumesOptions struct {
-	cleanVolumesOptions
+	CleanOptions
 	volumes []types.Volume
 }
 
 func removeVolumes(options removeVolumesOptions) {
 	for _, volume := range options.volumes {
-		err := options.client.VolumeRemove(context.Background(), volume.Name, options.force)
+		err := options.DockerClient.VolumeRemove(
+			context.Background(),
+			volume.Name,
+			options.Force,
+		)
 		if nil == err {
 			log.Printf("Volume %s removed", volume.Name)
 		} else {

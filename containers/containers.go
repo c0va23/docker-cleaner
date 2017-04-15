@@ -1,4 +1,4 @@
-package main
+package containers
 
 import (
 	"context"
@@ -6,18 +6,19 @@ import (
 	"time"
 
 	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/client"
 )
 
-type cleanContainersOptions struct {
-	sharedOptions
-	safePeriod    time.Duration
-	dryRun        bool
-	removeVolumes bool
-	removeLinks   bool
+type CleanOptions struct {
+	DockerClient  client.CommonAPIClient
+	SafePeriod    time.Duration
+	DryRun        bool
+	RemoveVolumes bool
+	RemoveLinks   bool
 }
 
-func cleanContainers(options cleanContainersOptions) {
-	containers, err := options.client.ContainerList(
+func Clean(options CleanOptions) {
+	containers, err := options.DockerClient.ContainerList(
 		context.Background(),
 		types.ContainerListOptions{All: true},
 	)
@@ -26,14 +27,14 @@ func cleanContainers(options cleanContainersOptions) {
 	}
 
 	uselessContainers := findUselessContainers(findUselessContainersOptions{
-		timeLimit:  time.Now().Add(-options.safePeriod * time.Second),
+		timeLimit:  time.Now().Add(-options.SafePeriod * time.Second),
 		containers: containers,
 	})
 
-	if !options.dryRun {
+	if !options.DryRun {
 		removeContainers(removeContainerOptions{
-			cleanContainersOptions: options,
-			containers:             uselessContainers,
+			CleanOptions: options,
+			containers:   uselessContainers,
 		})
 	}
 }
@@ -76,18 +77,18 @@ func findUselessContainers(options findUselessContainersOptions) []types.Contain
 }
 
 type removeContainerOptions struct {
-	cleanContainersOptions
+	CleanOptions
 	containers []types.Container
 }
 
 func removeContainers(options removeContainerOptions) {
 	containerRemoveOptions := types.ContainerRemoveOptions{
-		RemoveVolumes: options.removeVolumes,
-		RemoveLinks:   options.removeLinks,
+		RemoveVolumes: options.RemoveVolumes,
+		RemoveLinks:   options.RemoveLinks,
 	}
 
 	for _, container := range options.containers {
-		err := options.client.ContainerRemove(
+		err := options.DockerClient.ContainerRemove(
 			context.Background(),
 			container.ID,
 			containerRemoveOptions,

@@ -2,6 +2,7 @@ VERSION := $(shell cat VERSION)
 BUILD_TIME := $(shell date -u +%Y-%m-%dT%H:%M:%S)
 COMMIT := $(shell git log --pretty=format:'%h' -n 1)
 BIN_PATH := bin/duclean
+PACKAGE_BASE := github.com/c0va23/duclean
 
 init_dir:
 	mkdir -p bin/
@@ -14,12 +15,14 @@ get_deps:
 test:
 	go test
 
-build: init_dir
+build_duclean: init_dir
 	go build -o $(BIN_PATH) \
 		-ldflags "-X main.version=$(VERSION) \
 			-X main.buildTime=$(BUILD_TIME) \
 			-X main.commit=$(COMMIT)" \
-		*.go
+		$(PACKAGE_BASE)/cmd/duclean
+
+build: build_duclean
 
 push_tag:
 	git tag v$(VERSION)

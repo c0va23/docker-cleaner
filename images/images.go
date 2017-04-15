@@ -1,4 +1,4 @@
-package main
+package images
 
 import (
 	"context"
@@ -7,16 +7,17 @@ import (
 	"time"
 
 	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/client"
 )
 
-type cleanImagesOptions struct {
-	sharedOptions
-	safePeriod time.Duration
-	dryRun     bool
+type CleanOptions struct {
+	DockerClient client.CommonAPIClient
+	SafePeriod   time.Duration
+	DryRun       bool
 }
 
-func cleanImages(options cleanImagesOptions) {
-	containers, err := options.client.ContainerList(
+func Clean(options CleanOptions) {
+	containers, err := options.DockerClient.ContainerList(
 		context.Background(),
 		types.ContainerListOptions{All: true},
 	)
@@ -26,7 +27,7 @@ func cleanImages(options cleanImagesOptions) {
 
 	log.Printf("Containers count %d", len(containers))
 
-	images, err := options.client.ImageList(
+	images, err := options.DockerClient.ImageList(
 		context.Background(),
 		types.ImageListOptions{All: true},
 	)
@@ -36,7 +37,7 @@ func cleanImages(options cleanImagesOptions) {
 
 	log.Printf("Images count %d", len(images))
 
-	timeLimit := time.Now().Add(-options.safePeriod)
+	timeLimit := time.Now().Add(-options.SafePeriod)
 	log.Printf("Time limit %s", timeLimit)
 
 	uselessImageIDs := findUselessImages(findUselessImagesOptions{
@@ -45,10 +46,10 @@ func cleanImages(options cleanImagesOptions) {
 		containers: containers,
 	})
 
-	if !options.dryRun {
+	if !options.DryRun {
 		removeImages(removeImagesOptions{
-			cleanImagesOptions: options,
-			imageIDs:           uselessImageIDs,
+			CleanOptions: options,
+			imageIDs:     uselessImageIDs,
 		})
 	}
 }
@@ -112,13 +113,13 @@ func findUselessImages(options findUselessImagesOptions) []string {
 }
 
 type removeImagesOptions struct {
-	cleanImagesOptions
+	CleanOptions
 	imageIDs []string
 }
 
 func removeImages(options removeImagesOptions) {
 	for _, imageID := range options.imageIDs {
-		response, err := options.client.ImageRemove(
+		response, err := options.DockerClient.ImageRemove(
 			context.Background(),
 			imageID,
 			types.ImageRemoveOptions{},

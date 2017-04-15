@@ -7,6 +7,10 @@ import (
 
 	"github.com/docker/docker/client"
 	cli "github.com/jawher/mow.cli"
+
+	"github.com/c0va23/duclean/containers"
+	"github.com/c0va23/duclean/images"
+	"github.com/c0va23/duclean/volumes"
 )
 
 var (
@@ -55,12 +59,10 @@ func commandImages(client client.CommonAPIClient) func(*cli.Cmd) {
 		dryRun := getDryRun(cmd)
 
 		cmd.Action = func() {
-			cleanImages(cleanImagesOptions{
-				sharedOptions: sharedOptions{
-					client: client,
-				},
-				dryRun:     *dryRun,
-				safePeriod: time.Duration(*safePeriod),
+			images.Clean(images.CleanOptions{
+				DockerClient: client,
+				DryRun:       *dryRun,
+				SafePeriod:   time.Duration(*safePeriod),
 			})
 		}
 	}
@@ -74,14 +76,12 @@ func commandContainers(client client.CommonAPIClient) func(*cli.Cmd) {
 		removeLinks := cmd.BoolOpt("remove-links L", false, "Remove links")
 
 		cmd.Action = func() {
-			cleanContainers(cleanContainersOptions{
-				sharedOptions: sharedOptions{
-					client: client,
-				},
-				dryRun:        *dryRun,
-				safePeriod:    time.Duration(*safePeriod),
-				removeVolumes: *removeVolumes,
-				removeLinks:   *removeLinks,
+			containers.Clean(containers.CleanOptions{
+				DockerClient:  client,
+				DryRun:        *dryRun,
+				SafePeriod:    time.Duration(*safePeriod),
+				RemoveVolumes: *removeVolumes,
+				RemoveLinks:   *removeLinks,
 			})
 		}
 	}
@@ -93,12 +93,10 @@ func commandVolumes(client client.CommonAPIClient) func(*cli.Cmd) {
 		force := cmd.BoolOpt("force F", false, "Force remove volumes")
 
 		cmd.Action = func() {
-			cleanVolumes(cleanVolumesOptions{
-				sharedOptions: sharedOptions{
-					client: client,
-				},
-				dryRun: *dryRun,
-				force:  *force,
+			volumes.Clean(volumes.CleanOptions{
+				DockerClient: client,
+				DryRun:       *dryRun,
+				Force:        *force,
 			})
 		}
 	}
