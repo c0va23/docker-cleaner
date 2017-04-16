@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"time"
 
@@ -10,6 +11,7 @@ import (
 
 	"github.com/c0va23/duclean/containers"
 	"github.com/c0va23/duclean/images"
+	"github.com/c0va23/duclean/networks"
 	"github.com/c0va23/duclean/volumes"
 )
 
@@ -34,6 +36,8 @@ func main() {
 	app.Command("containers", "Clean containers", commandContainers(client))
 
 	app.Command("volumes", "Clean useless volumes", commandVolumes(client))
+
+	app.Command("networks", "Clean useless networks", commandNetworks(client))
 
 	app.Command("version", "Print version", func(cmd *cli.Cmd) {
 		cmd.Action = func() {
@@ -83,6 +87,23 @@ func commandContainers(client client.CommonAPIClient) func(*cli.Cmd) {
 				RemoveVolumes: *removeVolumes,
 				RemoveLinks:   *removeLinks,
 			})
+		}
+	}
+}
+
+func commandNetworks(client client.CommonAPIClient) func(*cli.Cmd) {
+	return func(cmd *cli.Cmd) {
+		dryRun := getDryRun(cmd)
+
+		cmd.Action = func() {
+			err := networks.Clean(networks.CleanOptions{
+				DockerClient: client,
+				DryRun:       *dryRun,
+			})
+
+			if err != nil {
+				log.Fatal(err)
+			}
 		}
 	}
 }
