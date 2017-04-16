@@ -9,12 +9,14 @@ import (
 	"github.com/docker/docker/client"
 )
 
+// CleanOptions is options for function .Clean
 type CleanOptions struct {
 	DockerClient client.CommonAPIClient
 	DryRun       bool
 	Force        bool
 }
 
+// Clean useless volumes
 func Clean(options CleanOptions) {
 	args := filters.NewArgs()
 	args.Add("dangling", "true")

@@ -10,12 +10,14 @@ import (
 	"github.com/docker/docker/client"
 )
 
+// CleanOptions is options for function .Clean
 type CleanOptions struct {
 	DockerClient client.CommonAPIClient
 	SafePeriod   time.Duration
 	DryRun       bool
 }
 
+// Clean useless images
 func Clean(options CleanOptions) {
 	containers, err := options.DockerClient.ContainerList(
 		context.Background(),
