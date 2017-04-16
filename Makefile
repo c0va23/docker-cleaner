@@ -13,7 +13,9 @@ get_deps:
 	git submodule update
 
 test:
-	go test
+	go test images/*.go
+	go test containers/*.go
+	go test volumes/*.go
 
 build_duclean: init_dir
 	go build -o $(BIN_PATH) \
